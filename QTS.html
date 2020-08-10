@@ -55,115 +55,121 @@
             
                 d3.csv("data.csv", function(data) {
 
-                    
-                    
-                    for(var j = 0; j < COMPANYNUMBER; j++){
-                        
-                        stock[j].investment_number = Math.floor(FUNDS / parseFloat(data[0][company_name[j]]));
-                        stock[j].myMoney += FUNDS % parseFloat(data[0][company_name[j]]);
-                        
-                        stock[j].total_money[0] = FUNDS;
+                    for(var j = 0;j < COMPANYNUMBER; j++){
+                        company_name[j] = data[0][j];
                     }
 
+                    for(var j = 0;j < COMPANYNUMBER; j++){
+                        console.log(company_name[j]);
+                    }
+                    
+                    // for(var j = 0; j < COMPANYNUMBER; j++){
+                        
+                    //     stock[j].investment_number = Math.floor(FUNDS / parseFloat(data[0][company_name[j]]));
+                    //     stock[j].myMoney += FUNDS % parseFloat(data[0][company_name[j]]);
+                        
+                    //     stock[j].total_money[0] = FUNDS;
+                    // }
+
                     
 
-                    for(var i = 0; i < 19; i++){
-                        for(var j = 0; j < COMPANYNUMBER; j++){
+                    // for(var i = 0; i < 19; i++){
+                    //     for(var j = 0; j < COMPANYNUMBER; j++){
                             
-                            stock[j].total_money[i+1] = stock[j].investment_number * parseFloat(data[i+1][company_name[j]]);
-                            stock[j].total_money[i+1] += stock[j].myMoney;
-                            stock[j].mx += (i+2) * (stock[j].total_money[i+1] - FUNDS);
-                            stock[j].my += (i+2) * (i+2);
-                        }
-                    }
+                    //         stock[j].total_money[i+1] = stock[j].investment_number * parseFloat(data[i+1][company_name[j]]);
+                    //         stock[j].total_money[i+1] += stock[j].myMoney;
+                    //         stock[j].mx += (i+2) * (stock[j].total_money[i+1] - FUNDS);
+                    //         stock[j].my += (i+2) * (i+2);
+                    //     }
+                    // }
 
-                    for(var i = 0; i < COMPANYNUMBER; i++){
-                        stock[i].m = stock[i].mx / stock[i].my;
-                        for(var j = 0; j < 20; j++){
-                            stock[i].day = j+1;
-                            stock[i].Y_line();
-                            stock[i].daily_risk += (stock[i].total_money[j] - stock[i].Y) * (stock[i].total_money[j] - stock[i].Y);
-                        }
+                    // for(var i = 0; i < COMPANYNUMBER; i++){
+                    //     stock[i].m = stock[i].mx / stock[i].my;
+                    //     for(var j = 0; j < 20; j++){
+                    //         stock[i].day = j+1;
+                    //         stock[i].Y_line();
+                    //         stock[i].daily_risk += (stock[i].total_money[j] - stock[i].Y) * (stock[i].total_money[j] - stock[i].Y);
+                    //     }
 
-                        stock[i].daily_risk = Math.sqrt(stock[i].daily_risk / 20);
-                        stock[i].trend = stock[i].m / stock[i].daily_risk;
-                    }
+                    //     stock[i].daily_risk = Math.sqrt(stock[i].daily_risk / 20);
+                    //     stock[i].trend = stock[i].m / stock[i].daily_risk;
+                    // }
 
-                    var dataset = [];
-                    for(var j = 0; j < COMPANYNUMBER; j++){
-                        var color = getRandomColor();
-                        dataset.push({
-                            label : company_name[j],
-                            lineTension : 0,
-                            backgroundColor : color,
-                            borderColor : color,
-                            borderWidth : 1,
-                            data: stock[j].total_money,
-                            fill : false,
-                        });
-                    } 
+                    // var dataset = [];
+                    // for(var j = 0; j < COMPANYNUMBER; j++){
+                    //     var color = getRandomColor();
+                    //     dataset.push({
+                    //         label : company_name[j],
+                    //         lineTension : 0,
+                    //         backgroundColor : color,
+                    //         borderColor : color,
+                    //         borderWidth : 1,
+                    //         data: stock[j].total_money,
+                    //         fill : false,
+                    //     });
+                    // } 
 
-                    var color = getRandomColor();
+                    // var color = getRandomColor();
 
-                    var totalMoney = [];
-                    for(var j = 0; j < 20; j++){
-                        totalMoney[j] = data[j]["totalMoney"];
-                    }
+                    // var totalMoney = [];
+                    // for(var j = 0; j < 20; j++){
+                    //     totalMoney[j] = data[j]["totalMoney"];
+                    // }
 
-                    dataset.push({
-                        label : "best" + data[0]["stock"],
-                            lineTension : 0,
-                            backgroundColor : color,
-                            borderColor : color,
-                            borderWidth : 1,
-                            data: totalMoney,
-                            fill : false,
-                    });
+                    // dataset.push({
+                    //     label : "best" + data[0]["stock"],
+                    //         lineTension : 0,
+                    //         backgroundColor : color,
+                    //         borderColor : color,
+                    //         borderWidth : 1,
+                    //         data: totalMoney,
+                    //         fill : false,
+                    // });
 
-                    color = getRandomColor();
+                    // color = getRandomColor();
 
 
 
-                    lineChartData = {
-                        labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
-                        datasets: dataset,
-                    }
+                    // lineChartData = {
+                    //     labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
+                    //     datasets: dataset,
+                    // }
 
-                    var dataset2 = [];
-                    for(var j = 0; j < COMPANYNUMBER; j++){
-                        var color = getRandomColor();
-                        dataset2.push({
-                            label : company_name[j],
-                            backgroundColor : color,
-                            borderColor : color,
-                            borderWidth : 1,
-                            data: [stock[j].trend],
-                        });
-                    } 
+                    // var dataset2 = [];
+                    // for(var j = 0; j < COMPANYNUMBER; j++){
+                    //     var color = getRandomColor();
+                    //     dataset2.push({
+                    //         label : company_name[j],
+                    //         backgroundColor : color,
+                    //         borderColor : color,
+                    //         borderWidth : 1,
+                    //         data: [stock[j].trend],
+                    //     });
+                    // } 
 
                     
-                    color = getRandomColor();
-                    dataset2.push({
-                        label : "best : " + data[0]["stock"],
-                        backgroundColor : color,
-                        borderColor : color,
-                        borderWidth : 1,
-                        data: [data[0]["trend"]],
-                    });
+                    // color = getRandomColor();
+                    // dataset2.push({
+                    //     label : "best : " + data[0]["stock"],
+                    //     backgroundColor : color,
+                    //     borderColor : color,
+                    //     borderWidth : 1,
+                    //     data: [data[0]["trend"]],
+                    // });
 
 
-                    var barChartData = {
+                    // var barChartData = {
                         
-                        datasets: dataset2,
+                    //     datasets: dataset2,
 
-                    };
+                    // };
                     
 
-                    var ctx = document.getElementById("canvas").getContext("2d");
-                    var ctx2 = document.getElementById('canvas2').getContext('2d');
-                    drawLineCanvas(ctx, lineChartData);
+                    // var ctx = document.getElementById("canvas").getContext("2d");
+                    // var ctx2 = document.getElementById('canvas2').getContext('2d');
+                    // drawLineCanvas(ctx, lineChartData);
 
-                    drawBarCanvas(ctx2, barChartData);
+                    // drawBarCanvas(ctx2, barChartData);
 
 
 
