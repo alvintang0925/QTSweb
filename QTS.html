@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset = "utf-8">
+        <title>bubble</title>
+        <style type = "text/css">
+            span,div{
+                width: 400px;
+                position: absolute;
+            }
+
+            img{
+                position: relative;
+            }
+        </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+        <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.js"></script>
+        <script>
+
+            var FUNDS = 10000000;
+            var company_name = ["AAPL", "AXP", "BA", "CAT", "CSCO",	"CVX", "DIS", "DD", "GS", "HD"];
+            var COMPANYNUMBER = 10;
+            var lineChartData;
+
+            var stock = [];
+            
+            for(var i = 0; i < COMPANYNUMBER; i++){
+                stock[i] = {
+                    investment_number : 0,
+                    total_money : [],
+                    myMoney : 0,
+                    mx : 0,
+                    my : 1,
+                    m : 0,
+                    daily_risk : 0,
+                    trend : 0,
+                    day : 0,
+                    Y : 0,
+                    y_line : [],
+                    Y_line : function(){
+                        this.Y = this.m * this.day + FUNDS;
+                        this.y_line.push(this.Y);
+                    }
+                };
+            }
+
+
+            function countTrend(s){
+                
+            }
+
+
+            function start(){            
+            
+                d3.csv("data.csv", function(data) {
+
+                    console.log(data[0]);
+                    
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        
+                        stock[j].investment_number = Math.floor(FUNDS / parseFloat(data[0][company_name[j]]));
+                        stock[j].myMoney += FUNDS % parseFloat(data[0][company_name[j]]);
+                        
+                        stock[j].total_money[0] = FUNDS;
+                    }
+
+                    
+
+                    for(var i = 0; i < 19; i++){
+                        for(var j = 0; j < COMPANYNUMBER; j++){
+                            
+                            stock[j].total_money[i+1] = stock[j].investment_number * parseFloat(data[i+1][company_name[j]]);
+                            stock[j].total_money[i+1] += stock[j].myMoney;
+                            stock[j].mx += (i+2) * (stock[j].total_money[i+1] - FUNDS);
+                            stock[j].my += (i+2) * (i+2);
+                        }
+                    }
+
+                    for(var i = 0; i < COMPANYNUMBER; i++){
+                        stock[i].m = stock[i].mx / stock[i].my;
+                        for(var j = 0; j < 20; j++){
+                            stock[i].day = j+1;
+                            stock[i].Y_line();
+                            stock[i].daily_risk += (stock[i].total_money[j] - stock[i].Y) * (stock[i].total_money[j] - stock[i].Y);
+                        }
+
+                        stock[i].daily_risk = Math.sqrt(stock[i].daily_risk / 20);
+                        stock[i].trend = stock[i].m / stock[i].daily_risk;
+                    }
+
+                    var dataset = [];
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        var color = getRandomColor();
+                        dataset.push({
+                            label : company_name[j],
+                            lineTension : 0,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: stock[j].total_money,
+                            fill : false,
+                        });
+                    } 
+
+                    var color = getRandomColor();
+
+                    var totalMoney = [];
+                    for(var j = 0; j < 20; j++){
+                        totalMoney[j] = data[j]["totalMoney"];
+                    }
+
+                    dataset.push({
+                        label : "best" + data[0]["stock"],
+                            lineTension : 0,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: totalMoney,
+                            fill : false,
+                    });
+
+                    color = getRandomColor();
+
+
+
+                    lineChartData = {
+                        labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
+                        datasets: dataset,
+                    }
+
+                    var dataset2 = [];
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        var color = getRandomColor();
+                        dataset2.push({
+                            label : company_name[j],
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: [stock[j].trend],
+                        });
+                    } 
+
+                    
+                    color = getRandomColor();
+                    dataset2.push({
+                        label : "best : " + data[0]["stock"],
+                        backgroundColor : color,
+                        borderColor : color,
+                        borderWidth : 1,
+                        data: [data[0]["trend"]],
+                    });
+
+
+                    var barChartData = {
+                        
+                        datasets: dataset2,
+
+                    };
+                    
+
+                    var ctx = document.getElementById("canvas").getContext("2d");
+                    var ctx2 = document.getElementById('canvas2').getContext('2d');
+                    drawLineCanvas(ctx, lineChartData);
+
+                    drawBarCanvas(ctx2, barChartData);
+
+
+
+
+
+                    
+                });
+            
+
+            }
+            function getRandomColor() {
+                var letters = '0123456789ABCDEF'.split('');
+                var color = '#';
+                for (var i = 0; i < 6; i++ ) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+
+
+            function drawBarCanvas(ctx, data){
+                console.log(data);
+                window.myBar = new Chart(ctx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        legend: {
+                            position: 'top',
+                        },
+
+                    }
+                });
+
+
+            }
+            function drawLineCanvas(ctx, data){
+                        window.myLine = new Chart(ctx, {
+                            type: 'line',
+                            data: data,
+                            options: {
+                                responsive: true,
+                                legend:{
+                                    display: true,
+                                },
+                                tooltips: {
+                                    enabled: true
+                                },
+                                scales: {
+                                    xAxes: [{
+                                        display: true
+                                    }],
+                                    yAxes: [{
+                                        display: true
+                                    }]
+                                },
+                            }
+                        });
+                    }
+
+            
+
+            window.addEventListener("load", start, false);
+            
+                
+
+            
+        </script>
+    </head>
+
+    <body>
+        <div style = "top: 200px" id = "div2">
+            <canvas id = "canvas" width="800" height="600"></canvas>
+        </div>
+
+        <div style = "top: 200px; left: 600px" id = "div3">
+            <canvas id = "canvas2" width="800" height="600"></canvas>
+            
+        </div>
+
+
+    </body>
+
+
+</html>
