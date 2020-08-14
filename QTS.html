@@ -5,180 +5,463 @@
         <meta charset = "utf-8">
         <title>bubble</title>
         <style type = "text/css">
-            span,div{
-                width: 400px;
+            div{
+                width: 600px;
                 position: absolute;
             }
 
-            img{
+            img,input,span{
                 position: relative;
             }
+            span{
+                position: relative;
+                width:40px;
+                display: inline-block;
+                
+            }
+            
+            
+
+
         </style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
         <script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.js"></script>
         <script>
 
             var FUNDS = 10000000;
-            var company_name = ["AAPL", "AXP", "BA", "CAT", "CSCO",	"CVX", "DIS", "DD", "GS", "HD"];
-            var COMPANYNUMBER = 10;
-            var lineChartData;
+            var DAYNUMBER = 20;
+            var STOCKNUMBER = 10;
+            var RUNTIMES = 10000;
+            var DELTA = 0.0004;
+            var company_name = [];
+            var data;
+            var bar_chart;
+            var line_chart;
+            var best_line_chart;
+            var ctx;
+            var ctx2;
+            var ctx3;
 
-            var stock = [];
-            
-            for(var i = 0; i < COMPANYNUMBER; i++){
-                stock[i] = {
-                    investment_number : 0,
-                    total_money : [],
-                    myMoney : 0,
-                    mx : 0,
-                    my : 1,
-                    m : 0,
-                    daily_risk : 0,
-                    trend : 0,
-                    day : 0,
-                    Y : 0,
-                    y_line : [],
-                    Y_line : function(){
-                        this.Y = this.m * this.day + FUNDS;
-                        this.y_line.push(this.Y);
-                    }
+            function STOCK(){
+                this.data = [];
+                this.investment_number = [];
+                this.totalMoney = [];
+                this.fs = [];
+                this.locate = [];
+                this.dMoney = 0;
+                this.myMoney = 0;
+                this.counter = 0;
+                this.mx = 0;
+                this.my = 1;
+                this.m = 0;
+                this.daily_risk = 0;
+                this.trend = 0;
+                this.day = 0;
+                this.Y = 0;
+                this.y_line = [];
+                this.Y_line = function(){
+                    this.Y = this.m * this.day + FUNDS;
+                    this.y_line.push(this.Y);
                 };
-            }
+                this.init = function(){
+                    for(var j = 0; j < this.counter; j++){
+                        this.fs[j] = [];
+                    }
+                    for(var j = 0; j < DAYNUMBER; j++){
+                        this.totalMoney[j] = 0;
+                    }
+                }
+            };
 
 
-            function countTrend(s){
+
+
+
+            function countTrend(stock){
                 
+                for(var j = 0; j < stock.length; j++){
+                    if(stock[j].counter!=0){
+                        stock[j].dMoney = Math.floor(FUNDS / stock[j].counter);
+                        stock[j].myMoney += FUNDS % stock[j].counter;
+                    }
+
+                    for(var k = 0; k < stock[j].counter; k++){
+                        stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[1][stock[j].locate[k]]));
+                        stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[1][stock[j].locate[k]]));
+                        stock[j].fs[k][0] = stock[j].dMoney;    
+                    }
+                    
+                    stock[j].totalMoney[0] = FUNDS;
+                }
+
+                for(var j = 0; j < DAYNUMBER-1; j++){
+                    for(var k = 0; k < stock.length; k++){
+                        for(var h = 0; h < stock[k].counter; h++){
+                            stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+2][stock[k].locate[h]]);
+                            stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+2][stock[k].locate[h]]);
+                        }
+                        stock[k].totalMoney[j+1] += stock[k].myMoney;
+                        stock[k].mx += (j+2) * (stock[k].totalMoney[j+1] - FUNDS);
+                        stock[k].my += (j+2) * (j+2);
+                    }
+                }
+
+                for(var j = 0; j < stock.length; j++){
+                    if(stock[j].counter!=0){
+                        stock[j].m = stock[j].mx / stock[j].my;
+                    }
+                    
+                    for (var k = 0; k < DAYNUMBER; k++){
+                        stock[j].day = k+1;
+                        stock[j].Y_line();
+                        stock[j].daily_risk += (stock[j].totalMoney[k] - stock[j].Y) * (stock[j].totalMoney[k] - stock[j].Y);
+                    }
+                    stock[j].daily_risk = Math.sqrt(stock[j].daily_risk / DAYNUMBER);
+                    stock[j].trend = stock[j].m / stock[j].daily_risk;
+                    
+                }
+
+                
+                
+                return stock;
             }
 
+            function countFunds(){
+                
+                var COMPANYNUMBER = parseInt(document.getElementById("company_number").value);
+                
+                d3.csv("data1.csv", function(d) {
+                    data = d;
 
-            function start(){            
+                    var stock = [];
             
-                d3.csv("data.csv", function(data) {
 
                     for(var j = 0;j < COMPANYNUMBER; j++){
                         company_name[j] = data[0][j];
                     }
 
-                    for(var j = 0;j < COMPANYNUMBER; j++){
-                        console.log(company_name[j]);
+
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        stock[j] = new STOCK();
+
+                        for(var k = 0; k < COMPANYNUMBER; k++){
+                            if(k != j){
+                                stock[j].data[k] = 0;
+                            }else{
+                                stock[j].data[k] = 1;
+                                stock[j].locate[stock[j].counter] = k;
+                                stock[j].counter++;
+                            }
+                        }
+                        stock[j].init();
+                    }
+
+                    stock = countTrend(stock);
+
+                    var best_answer = new STOCK();
+
+                    var worst_answer = new STOCK();
+
+                    best_answer.trend = 0;
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        best_answer.data[j] = 0;
+                    }
+                    worst_answer.trend = 10000;
+
+                    var change_number = [];
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        change_number[j] = 0.5;
                     }
                     
-                    // for(var j = 0; j < COMPANYNUMBER; j++){
+
+                    for(var i = 0; i < RUNTIMES; i++){
+                        for(var j = 0; j< COMPANYNUMBER; j++){
+                            change_number[j] = Math.floor(change_number[j] * 1000) / 1000;
+                        }
                         
-                    //     stock[j].investment_number = Math.floor(FUNDS / parseFloat(data[0][company_name[j]]));
-                    //     stock[j].myMoney += FUNDS % parseFloat(data[0][company_name[j]]);
+                        var r_stock = [];
+                
+                        for(var j = 0; j < STOCKNUMBER; j++){
+                            r_stock[j] = new STOCK();
+
+                            for(var k = 0; k < DAYNUMBER; k++){
+                                r_stock[j].totalMoney[k] = 0;
+                            }
+
+                            for(var k = 0; k < COMPANYNUMBER; k++){
+                                var r = Math.random();
+
+                                if(r > change_number[k]){
+                                    r_stock[j].data[k] = 0;
+                                }else{
+                                    r_stock[j].data[k] = 1;
+                                    r_stock[j].locate[r_stock[j].counter] = k;
+                                    r_stock[j].counter++;
+                                }
+                            }
+                            r_stock[j].init();
+                        }
+
                         
-                    //     stock[j].total_money[0] = FUNDS;
-                    // }
 
-                    
-
-                    // for(var i = 0; i < 19; i++){
-                    //     for(var j = 0; j < COMPANYNUMBER; j++){
-                            
-                    //         stock[j].total_money[i+1] = stock[j].investment_number * parseFloat(data[i+1][company_name[j]]);
-                    //         stock[j].total_money[i+1] += stock[j].myMoney;
-                    //         stock[j].mx += (i+2) * (stock[j].total_money[i+1] - FUNDS);
-                    //         stock[j].my += (i+2) * (i+2);
-                    //     }
-                    // }
-
-                    // for(var i = 0; i < COMPANYNUMBER; i++){
-                    //     stock[i].m = stock[i].mx / stock[i].my;
-                    //     for(var j = 0; j < 20; j++){
-                    //         stock[i].day = j+1;
-                    //         stock[i].Y_line();
-                    //         stock[i].daily_risk += (stock[i].total_money[j] - stock[i].Y) * (stock[i].total_money[j] - stock[i].Y);
-                    //     }
-
-                    //     stock[i].daily_risk = Math.sqrt(stock[i].daily_risk / 20);
-                    //     stock[i].trend = stock[i].m / stock[i].daily_risk;
-                    // }
-
-                    // var dataset = [];
-                    // for(var j = 0; j < COMPANYNUMBER; j++){
-                    //     var color = getRandomColor();
-                    //     dataset.push({
-                    //         label : company_name[j],
-                    //         lineTension : 0,
-                    //         backgroundColor : color,
-                    //         borderColor : color,
-                    //         borderWidth : 1,
-                    //         data: stock[j].total_money,
-                    //         fill : false,
-                    //     });
-                    // } 
-
-                    // var color = getRandomColor();
-
-                    // var totalMoney = [];
-                    // for(var j = 0; j < 20; j++){
-                    //     totalMoney[j] = data[j]["totalMoney"];
-                    // }
-
-                    // dataset.push({
-                    //     label : "best" + data[0]["stock"],
-                    //         lineTension : 0,
-                    //         backgroundColor : color,
-                    //         borderColor : color,
-                    //         borderWidth : 1,
-                    //         data: totalMoney,
-                    //         fill : false,
-                    // });
-
-                    // color = getRandomColor();
+                        r_stock = countTrend(r_stock);
 
 
+                        var good_answer = r_stock[0];
+                        var bad_answer = r_stock[r_stock.length-1];
+                        for(var j = 0; j < STOCKNUMBER; j++){
+                            if(good_answer.trend < r_stock[j].trend){
+                                good_answer = r_stock[j];
+                            }else if(bad_answer > r_stock[j].trend){
+                                bad_answer = r_stock[j];
+                            }
+                        }
 
-                    // lineChartData = {
-                    //     labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
-                    //     datasets: dataset,
-                    // }
-
-                    // var dataset2 = [];
-                    // for(var j = 0; j < COMPANYNUMBER; j++){
-                    //     var color = getRandomColor();
-                    //     dataset2.push({
-                    //         label : company_name[j],
-                    //         backgroundColor : color,
-                    //         borderColor : color,
-                    //         borderWidth : 1,
-                    //         data: [stock[j].trend],
-                    //     });
-                    // } 
-
-                    
-                    // color = getRandomColor();
-                    // dataset2.push({
-                    //     label : "best : " + data[0]["stock"],
-                    //     backgroundColor : color,
-                    //     borderColor : color,
-                    //     borderWidth : 1,
-                    //     data: [data[0]["trend"]],
-                    // });
-
-
-                    // var barChartData = {
+                        if(best_answer.trend < good_answer.trend){
+                            best_answer = good_answer;
+                            console.log("i = ", i);
+                            console.log(best_answer.counter);
+                            console.log(best_answer.trend);
+                        }
                         
-                    //     datasets: dataset2,
+                        if(worst_answer.trend > bad_answer.trend){
+                            worst_answer = bad_answer;
+                        }
 
-                    // };
+                        for(var j = 0; j < COMPANYNUMBER; j++){
+                            if(best_answer.data[j] > bad_answer.data[j]){
+                                change_number[j] += DELTA;
+                            }else if(best_answer.data[j] < bad_answer.data[j]){
+                                change_number[j] -= DELTA;
+
+                            }
+                        }   
+
+                    }
+
+                    console.log(best_answer);
                     
 
-                    // var ctx = document.getElementById("canvas").getContext("2d");
-                    // var ctx2 = document.getElementById('canvas2').getContext('2d');
-                    // drawLineCanvas(ctx, lineChartData);
+                    var best_name = "";
+                    for(var j = 0; j < best_answer.counter; j++){
+                        best_name += company_name[best_answer.locate[j]];
+                        best_name += ", ";
+                    }
+                    
 
-                    // drawBarCanvas(ctx2, barChartData);
 
 
 
+
+                    var color = getRandomColor();
+
+                    var dataset = [];
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        color = getRandomColor();
+                        dataset.push({
+                            label : company_name[j],
+                            borderDash: [5, 5],
+                            lineTension : 0,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: stock[j].totalMoney,
+                            fill : false,
+                        });
+                    } 
+
+                    color = getRandomColor();
+
+                    
+
+                    dataset.push({
+                        label : "best : " + best_name,
+                            lineTension : 0,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 3,
+                            data: best_answer.totalMoney,
+                            fill : false,
+                    });
+
+                    color = getRandomColor();
+
+                    dataset.push({
+                        label : "趨勢線",
+                            lineTension : 0,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: best_answer.y_line,
+                            fill : true,
+                    });
+
+
+
+                    color = getRandomColor();
+
+
+
+                    var lineChartData = {
+                        labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
+                        datasets: dataset,
+                    }
+
+                    var dataset2 = [];
+                    for(var j = 0; j < COMPANYNUMBER; j++){
+                        color = getRandomColor();
+                        dataset2.push({
+                            label : company_name[j],
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: [stock[j].trend],
+                        });
+                    } 
+
+                    
+                    color = getRandomColor();
+                    dataset2.push({
+                        label : "best : " + best_name,
+                        backgroundColor : color,
+                        borderColor : color,
+                        borderWidth : 1,
+                        data: [best_answer.trend],
+                    });
+
+                    
+                    var barChartData = {
+                        datasets: dataset2,
+                    };
+
+                    var dataset3 = [];
+
+                    for(var j = 0; j < best_answer.counter; j++){
+                        color = getRandomColor();
+                        dataset3.push({
+                            label : company_name[best_answer.locate[j]],
+                            borderDash: [5, 5],
+                            lineTension : 0,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: best_answer.fs[j],
+                            fill : false,
+                            yAxisID: 'y-axis-1',
+                        });
+                    } 
+
+                    color = getRandomColor();
+                    dataset3.push({
+                            label : "best : " + best_name,
+                            lineTension : 0.4,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 3,
+                            data: best_answer.totalMoney,
+                            fill : false,
+                            yAxisID: 'y-axis-2',
+                        });
+
+                    var bestLineChartData = {
+                        labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
+                        datasets: dataset3,
+                    }
+
+                    
+
+                    
+                    line_chart.destroy();
+                    line_chart = new Chart(ctx,{
+                        type: 'line',
+                            data: lineChartData,
+                            options: {
+                                responsive: true,
+                                legend:{
+                                    display: true,
+                                },
+                                tooltips: {
+                                    enabled: true
+                                },
+                                scales: {
+                                    xAxes: [{
+                                        display: true
+                                    }],
+                                    yAxes: [{
+                                        display: true
+                                    }]
+                                },
+                            }
+                    });
 
 
                     
+                    best_line_chart.destroy();
+                    best_line_chart = new Chart(ctx3,{
+                        type: 'line',
+                            data: bestLineChartData,
+                            options: {
+                                responsive: true,
+                                legend:{
+                                    display: true,
+                                },
+                                tooltips: {
+                                    enabled: true
+                                },
+                                scales: {
+                                    xAxes: [{
+                                        display: true
+                                    }],
+                                    yAxes: [{
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'left',
+                                        id: 'y-axis-1',
+                                    }, {
+                                        type: 'linear', 
+                                        display: true,
+                                        position: 'right',
+                                        id: 'y-axis-2',
+
+                                        // grid line settings
+                                        gridLines: {
+                                            drawOnChartArea: false, // only want the grid lines for one axis to show up
+                                        },
+                                    }]
+                                },
+
+                            }
+                    });
+
+                     bar_chart.destroy();
+
+                     bar_chart = new Chart(ctx2,{
+                        type: 'bar',
+                        data: barChartData,
+                        options: {
+                            responsive: true,
+                            legend: {
+                                position: 'top',
+                            },
+
+                        }
+                    });
                 });
-            
+                
 
+            }
+
+
+            function start(){       
+                var sendButton = document.getElementById("sendButton");
+                sendButton.addEventListener("click", countFunds, false);
+                ctx = document.getElementById("canvas").getContext("2d");
+                ctx2 = document.getElementById('canvas2').getContext('2d');
+                ctx3 = document.getElementById('canvas3').getContext('2d');
+                line_chart = new Chart(ctx,{});
+                bar_chart = new Chart(ctx2,{})
+                best_line_chart = bar_chart = new Chart(ctx2,{});
+            
             }
             function getRandomColor() {
                 var letters = '0123456789ABCDEF'.split('');
@@ -191,7 +474,6 @@
 
 
             function drawBarCanvas(ctx, data){
-                console.log(data);
                 window.myBar = new Chart(ctx, {
                     type: 'bar',
                     data: data,
@@ -241,13 +523,95 @@
     </head>
 
     <body>
-        <div style = "top: 200px" id = "div2">
+        <div>
+            <!-- <input type = "checkbox"  value = "0" name = "box">
+            <span>AAPL</span>
+            <input type = "checkbox"  value = "1" name = "box">
+            <span>AXP</span>
+            <input type = "checkbox"  value = "2" name = "box">
+            <span>BA</span>
+            <input type = "checkbox"  value = "3" name = "box">
+            <span>CAT</span>
+            <input type = "checkbox"  value = "4" name = "box">
+            <span>CSCO</span>
+            <br>
+            <input type = "checkbox"  value = "5" name = "box">
+            <span>CVX</span>
+            <input type = "checkbox"  value = "6" name = "box">
+            <span>DIS</span>
+            <input type = "checkbox"  value = "7" name = "box">
+            <span>DD</span>
+            <input type = "checkbox" value = "8" name = "box">
+            <span>GS</span>
+            <input type = "checkbox" value = "9" name = "box">
+            <span>HD</span>
+            <br>
+            <input type = "checkbox" value = "10" name = "box">
+            <span>IBM</span>
+            <input type = "checkbox"  value = "11" name = "box">
+            <span>INTC</span>
+            <input type = "checkbox"  value = "12" name = "box">
+            <span>JNJ</span>
+            <input type = "checkbox"  value = "13" name = "box">
+            <span>JPM</span>
+            <input type = "checkbox"  value = "14" name = "box">
+            <span>KO</span>
+            <br>
+            <input type = "checkbox"  value = "15" name = "box">
+            <span>MCD</span>
+            <input type = "checkbox"  value = "16" name = "box">
+            <span>MMM</span>
+            <input type = "checkbox"  value = "17" name = "box">
+            <span>MRK</span>
+            <input type = "checkbox"  value = "18" name = "box">
+            <span>MSFT</span>
+            <input type = "checkbox"  value = "19" name = "box">
+            <span>NKE</span>
+            <br>
+            <input type = "checkbox"  value = "20" name = "box">
+            <span>PFE</span>
+            <input type = "checkbox"  value = "21" name = "box">
+            <span>PG</span>
+            <input type = "checkbox"  value = "22" name = "box">
+            <span>TRV</span>
+            <input type = "checkbox"  value = "23" name = "box">
+            <span>UNH</span>
+            <input type = "checkbox"  value = "24" name = "box">
+            <span>UTX</span>
+            <br>
+            <input type = "checkbox"  value = "25" name = "box">
+            <span>V</span>
+            <input type = "checkbox"  value = "26" name = "box">
+            <span>VZ</span>
+            <input type = "checkbox"  value = "27" name = "box">
+            <span>WBA</span>
+            <input type = "checkbox"  value = "28" name = "box">
+            <span>WMT</span>
+            <input type = "checkbox"  value = "29" name = "box">
+            <span>XOM</span>
+            <br> -->
+            請輸入檔數：
+            <input type = "text" value = "" id = "company_number">
+            <input type = "button" value="送出" id = "sendButton">
+
+
+     
+
+        
+        
+        </div>
+
+
+        <div style = "top: 100px" id = "div2">
             <canvas id = "canvas" width="800" height="600"></canvas>
         </div>
 
-        <div style = "top: 200px; left: 600px" id = "div3">
+        <div style = "top: 100px; left:650px" id = "div3">
             <canvas id = "canvas2" width="800" height="600"></canvas>
-            
+        </div>
+
+        <div style = "top: 700px" id = "div4">
+            <canvas id = "canvas3" width="800" height="600"></canvas>
         </div>
 
 
