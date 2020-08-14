@@ -33,7 +33,9 @@
             var STOCKNUMBER = 10;
             var RUNTIMES = 10000;
             var DELTA = 0.0004;
+            var COMPANYNUMBER;
             var company_name = [];
+            var s_company = [];
             var data;
             var bar_chart;
             var line_chart;
@@ -41,6 +43,7 @@
             var ctx;
             var ctx2;
             var ctx3;
+            var box;
 
             function STOCK(){
                 this.data = [];
@@ -86,8 +89,8 @@
                     }
 
                     for(var k = 0; k < stock[j].counter; k++){
-                        stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[1][stock[j].locate[k]]));
-                        stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[1][stock[j].locate[k]]));
+                        stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[1][s_company[stock[j].locate[k]]]));
+                        stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[1][s_company[stock[j].locate[k]]]));
                         stock[j].fs[k][0] = stock[j].dMoney;    
                     }
                     
@@ -97,8 +100,8 @@
                 for(var j = 0; j < DAYNUMBER-1; j++){
                     for(var k = 0; k < stock.length; k++){
                         for(var h = 0; h < stock[k].counter; h++){
-                            stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+2][stock[k].locate[h]]);
-                            stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+2][stock[k].locate[h]]);
+                            stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+2][s_company[stock[k].locate[h]]]);
+                            stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+2][s_company[stock[k].locate[h]]]);
                         }
                         stock[k].totalMoney[j+1] += stock[k].myMoney;
                         stock[k].mx += (j+2) * (stock[k].totalMoney[j+1] - FUNDS);
@@ -128,16 +131,24 @@
 
             function countFunds(){
                 
-                var COMPANYNUMBER = parseInt(document.getElementById("company_number").value);
+                var c = 0;
+
+                for(var j = 0; j < box.length; j++){
+                    if(box[j].checked){
+                        s_company[c] = parseInt(box[j].value);
+                        c++;
+                    }
+                }
+                COMPANYNUMBER = c;
                 
-                d3.csv("data1.csv", function(d) {
+                d3.csv("data.csv", function(d) {
                     data = d;
 
                     var stock = [];
             
 
                     for(var j = 0;j < COMPANYNUMBER; j++){
-                        company_name[j] = data[0][j];
+                        company_name[j] = data[0][s_company[j]];
                     }
 
 
@@ -448,13 +459,38 @@
                     });
                 });
                 
+            }
 
+            function selectALL(){
+                for(var j = 0; j < box.length; j++){
+                    box[j].checked = true;
+                }
+            }
+
+            function resetAll(){
+                for(var j = 0; j < box.length; j++){
+                    box[j].checked = false;
+                }
+            }
+
+            function setAll(){
+                var n = parseInt(document.getElementById("select_number").value);
+                for(var j = 0; j < n; j++){
+                    box[j].checked = true;
+                }
             }
 
 
             function start(){       
                 var sendButton = document.getElementById("sendButton");
                 sendButton.addEventListener("click", countFunds, false);
+                var allButton = document.getElementById("allButton");
+                allButton.addEventListener("click", selectALL, false);
+                var resetButton = document.getElementById("resetButton");
+                resetButton.addEventListener("click", resetAll, false);
+                var setButton = document.getElementById("setButton");
+                setButton.addEventListener("click", setAll, false);
+                box =document.getElementsByName("box");
                 ctx = document.getElementById("canvas").getContext("2d");
                 ctx2 = document.getElementById('canvas2').getContext('2d');
                 ctx3 = document.getElementById('canvas3').getContext('2d');
@@ -473,44 +509,6 @@
             }
 
 
-            function drawBarCanvas(ctx, data){
-                window.myBar = new Chart(ctx, {
-                    type: 'bar',
-                    data: data,
-                    options: {
-                        responsive: true,
-                        legend: {
-                            position: 'top',
-                        },
-
-                    }
-                });
-
-
-            }
-            function drawLineCanvas(ctx, data){
-                        window.myLine = new Chart(ctx, {
-                            type: 'line',
-                            data: data,
-                            options: {
-                                responsive: true,
-                                legend:{
-                                    display: true,
-                                },
-                                tooltips: {
-                                    enabled: true
-                                },
-                                scales: {
-                                    xAxes: [{
-                                        display: true
-                                    }],
-                                    yAxes: [{
-                                        display: true
-                                    }]
-                                },
-                            }
-                        });
-                    }
 
             
 
@@ -524,7 +522,7 @@
 
     <body>
         <div>
-            <!-- <input type = "checkbox"  value = "0" name = "box">
+            <input type = "checkbox"  value = "0" name = "box">
             <span>AAPL</span>
             <input type = "checkbox"  value = "1" name = "box">
             <span>AXP</span>
@@ -589,9 +587,15 @@
             <span>WMT</span>
             <input type = "checkbox"  value = "29" name = "box">
             <span>XOM</span>
-            <br> -->
-            請輸入檔數：
-            <input type = "text" value = "" id = "company_number">
+            <br>
+            
+            <input type = "button" value="重設" id = "resetButton">
+            <input type = "button" value="全選" id = "allButton">
+            選前
+            <input type = "text" value="10" id = "select_number">
+            檔
+            <input type = "button" value="Set" id = "setButton">
+            <br>
             <input type = "button" value="送出" id = "sendButton">
 
 
@@ -602,11 +606,11 @@
         </div>
 
 
-        <div style = "top: 100px" id = "div2">
+        <div style = "top: 200px" id = "div2">
             <canvas id = "canvas" width="800" height="600"></canvas>
         </div>
 
-        <div style = "top: 100px; left:650px" id = "div3">
+        <div style = "top: 200px; left:650px" id = "div3">
             <canvas id = "canvas2" width="800" height="600"></canvas>
         </div>
 
