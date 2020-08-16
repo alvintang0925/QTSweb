@@ -29,7 +29,7 @@
         <script>
 
             var FUNDS = 10000000;
-            var DAYNUMBER = 20;
+            var DAYNUMBER;
             var STOCKNUMBER = 10;
             var RUNTIMES = 10000;
             var DELTA = 0.0004;
@@ -91,15 +91,17 @@
                     for(var k = 0; k < stock[j].counter; k++){
                         stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[1][s_company[stock[j].locate[k]]]));
                         stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[1][s_company[stock[j].locate[k]]]));
-                        stock[j].fs[k][0] = stock[j].dMoney;    
+                        stock[j].fs[k][0] = stock[j].investment_number[k] * parseFloat(data[1][s_company[stock[j].locate[k]]]);    
                     }
                     
                     stock[j].totalMoney[0] = FUNDS;
                 }
-
+                
+                
                 for(var j = 0; j < DAYNUMBER-1; j++){
                     for(var k = 0; k < stock.length; k++){
                         for(var h = 0; h < stock[k].counter; h++){
+                            
                             stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+2][s_company[stock[k].locate[h]]]);
                             stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+2][s_company[stock[k].locate[h]]]);
                         }
@@ -141,8 +143,9 @@
                 }
                 COMPANYNUMBER = c;
                 
-                d3.csv("data.csv", function(d) {
+                d3.csv("data3.csv", function(d) {
                     data = d;
+                    DAYNUMBER = data.length - 1;
 
                     var stock = [];
             
@@ -259,8 +262,10 @@
                         best_name += ", ";
                     }
                     
-
-
+                    var day_label = [];
+                    for(var j = 0; j < DAYNUMBER; j++){
+                        day_label.push("day "+(j+1));
+                    }
 
 
 
@@ -314,7 +319,7 @@
 
 
                     var lineChartData = {
-                        labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
+                        labels: day_label,
                         datasets: dataset,
                     }
 
@@ -375,7 +380,7 @@
                         });
 
                     var bestLineChartData = {
-                        labels: ["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10", "day11", "day12", "day13", "day14", "day15", "day16", "day17", "day18", "day19", "day20"],
+                        labels: day_label,
                         datasets: dataset3,
                     }
 
