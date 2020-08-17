@@ -31,8 +31,8 @@
             var FUNDS = 10000000;
             var DAYNUMBER;
             var STOCKNUMBER = 10;
-            var RUNTIMES = 10000;
-            var DELTA = 0.0004;
+            var RUNTIMES;
+            var DELTA;
             var COMPANYNUMBER;
             var company_name = [];
             var s_company = [];
@@ -132,6 +132,14 @@
             }
 
             function countFunds(){
+
+                var se = document.getElementById("qts_list").value;
+                DELTA = parseFloat(document.getElementById("delta").value);
+                RUNTIMES = parseInt(document.getElementById("runtimes").value);
+
+                console.log(DELTA);
+                console.log(RUNTIMES);
+                console.log(se);
                 
                 var c = 0;
 
@@ -142,6 +150,8 @@
                     }
                 }
                 COMPANYNUMBER = c;
+
+
                 
                 d3.csv("data3.csv", function(d) {
                     data = d;
@@ -232,6 +242,13 @@
                         }
 
                         if(best_answer.trend < good_answer.trend){
+                            if(se == "GNQTS"){
+                                for(var j = 0; j < COMPANYNUMBER; j++){
+                                    if(best_answer.data[j] != good_answer.data[j]){
+                                        change_number[j] = 1 - change_number[j];
+                                    }
+                                }
+                            }
                             best_answer = good_answer;
                             console.log("i = ", i);
                             console.log(best_answer.counter);
@@ -243,11 +260,18 @@
                         }
 
                         for(var j = 0; j < COMPANYNUMBER; j++){
-                            if(best_answer.data[j] > bad_answer.data[j]){
-                                change_number[j] += DELTA;
-                            }else if(best_answer.data[j] < bad_answer.data[j]){
-                                change_number[j] -= DELTA;
-
+                            if(se == "GNQTS" || se == "GQTS"){
+                                if(best_answer.data[j] > bad_answer.data[j]){
+                                    change_number[j] += DELTA;
+                                }else if(best_answer.data[j] < bad_answer.data[j]){
+                                    change_number[j] -= DELTA;
+                                }
+                            }else{
+                                if(good_answer.data[j] > bad_answer.data[j]){
+                                    change_number[j] += DELTA;
+                                }else if(good_answer.data[j] < bad_answer.data[j]){
+                                    change_number[j] -= DELTA;
+                                }
                             }
                         }   
 
@@ -495,6 +519,8 @@
                 resetButton.addEventListener("click", resetAll, false);
                 var setButton = document.getElementById("setButton");
                 setButton.addEventListener("click", setAll, false);
+
+                
                 box =document.getElementsByName("box");
                 ctx = document.getElementById("canvas").getContext("2d");
                 ctx2 = document.getElementById('canvas2').getContext('2d');
@@ -601,6 +627,16 @@
             檔
             <input type = "button" value="Set" id = "setButton">
             <br>
+            旋轉角度
+            <input type = "text" value="0.0004" id = "delta">
+            執行次數
+            <input type = "text" value="10000" id = "runtimes">
+            <br>
+            <select name = "qts" id = "qts_list">
+                <option value = "QTS">QTS</option>
+                <option value = "GQTS">GQTS</option>
+                <option value = "GNQTS" selected>GNQTS</option>
+            </select>
             <input type = "button" value="送出" id = "sendButton">
 
 
@@ -611,15 +647,15 @@
         </div>
 
 
-        <div style = "top: 200px" id = "div2">
+        <div style = "top: 250px" id = "div2">
             <canvas id = "canvas" width="800" height="600"></canvas>
         </div>
 
-        <div style = "top: 200px; left:650px" id = "div3">
+        <div style = "top: 250px; left:650px" id = "div3">
             <canvas id = "canvas2" width="800" height="600"></canvas>
         </div>
 
-        <div style = "top: 700px" id = "div4">
+        <div style = "top: 750px" id = "div4">
             <canvas id = "canvas3" width="800" height="600"></canvas>
         </div>
 
