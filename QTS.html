@@ -31,6 +31,7 @@
             var FUNDS = 10000000;
             var DAYNUMBER;
             var STOCKNUMBER = 10;
+            var QTSTYPE = 2; //QTS 0, GQTS 1, GNQTS
             var RUNTIMES;
             var DELTA;
             var COMPANYNUMBER;
@@ -48,6 +49,7 @@
             function STOCK(){
                 this.data = [];
                 this.investment_number = [];
+                this.company_name = "",
                 this.totalMoney = [];
                 this.fs = [];
                 this.locate = [];
@@ -122,7 +124,11 @@
                         stock[j].daily_risk += (stock[j].totalMoney[k] - stock[j].Y) * (stock[j].totalMoney[k] - stock[j].Y);
                     }
                     stock[j].daily_risk = Math.sqrt(stock[j].daily_risk / DAYNUMBER);
-                    stock[j].trend = stock[j].m / stock[j].daily_risk;
+                    if(stock[j].m < 0){
+                        stock[j].trend = stock[j].m * stock[j].daily_risk;    
+                    }else{
+                        stock[j].trend = stock[j].m / stock[j].daily_risk;
+                    }
                     
                 }
 
@@ -133,13 +139,9 @@
 
             function countFunds(){
 
-                var se = document.getElementById("qts_list").value;
+                QTSTYPE = document.getElementById("qts_list").value;
                 DELTA = parseFloat(document.getElementById("delta").value);
                 RUNTIMES = parseInt(document.getElementById("runtimes").value);
-
-                console.log(DELTA);
-                console.log(RUNTIMES);
-                console.log(se);
                 
                 var c = 0;
 
@@ -164,7 +166,6 @@
                         company_name[j] = data[0][s_company[j]];
                     }
 
-
                     for(var j = 0; j < COMPANYNUMBER; j++){
                         stock[j] = new STOCK();
 
@@ -172,7 +173,11 @@
                             if(k != j){
                                 stock[j].data[k] = 0;
                             }else{
+                                if(stock[j].counter != 0){
+                                    stock[j].company_name += ", ";
+                                }
                                 stock[j].data[k] = 1;
+                                stock[j].company_name += company_name[k];
                                 stock[j].locate[stock[j].counter] = k;
                                 stock[j].counter++;
                             }
@@ -187,6 +192,7 @@
                     var worst_answer = new STOCK();
 
                     best_answer.trend = 0;
+
                     for(var j = 0; j < COMPANYNUMBER; j++){
                         best_answer.data[j] = 0;
                     }
@@ -197,7 +203,6 @@
                         change_number[j] = 0.5;
                     }
                     
-
                     for(var i = 0; i < RUNTIMES; i++){
                         for(var j = 0; j< COMPANYNUMBER; j++){
                             change_number[j] = Math.floor(change_number[j] * 1000) / 1000;
@@ -219,6 +224,10 @@
                                     r_stock[j].data[k] = 0;
                                 }else{
                                     r_stock[j].data[k] = 1;
+                                    if(r_stock[j].counter != 0){
+                                        r_stock[j].company_name += ", ";
+                                    }
+                                    r_stock[j].company_name += company_name[k];
                                     r_stock[j].locate[r_stock[j].counter] = k;
                                     r_stock[j].counter++;
                                 }
@@ -242,13 +251,7 @@
                         }
 
                         if(best_answer.trend < good_answer.trend){
-                            if(se == "GNQTS"){
-                                for(var j = 0; j < COMPANYNUMBER; j++){
-                                    if(best_answer.data[j] != good_answer.data[j]){
-                                        change_number[j] = 1 - change_number[j];
-                                    }
-                                }
-                            }
+                            
                             best_answer = good_answer;
                             console.log("i = ", i);
                             console.log(best_answer.counter);
@@ -260,19 +263,39 @@
                         }
 
                         for(var j = 0; j < COMPANYNUMBER; j++){
-                            if(se == "GNQTS" || se == "GQTS"){
-                                if(best_answer.data[j] > bad_answer.data[j]){
-                                    change_number[j] += DELTA;
-                                }else if(best_answer.data[j] < bad_answer.data[j]){
-                                    change_number[j] -= DELTA;
-                                }
-                            }else{
-                                if(good_answer.data[j] > bad_answer.data[j]){
-                                    change_number[j] += DELTA;
-                                }else if(good_answer.data[j] < bad_answer.data[j]){
-                                    change_number[j] -= DELTA;
-                                }
+                            
+                            switch(QTSTYPE){
+                                case "QTS":
+                                    if(good_answer.data[j] > bad_answer.data[j]){
+                                        change_number[j] += DELTA;
+                                    }else if(good_answer.data[j] < bad_answer.data[j]){
+                                        change_number[j] -= DELTA;
+                                    }
+                                    break;
+                                
+                                case "GQTS":
+                                    if(best_answer.data[j] > bad_answer.data[j]){
+                                        change_number[j] += DELTA;
+                                    }else if(best_answer.data[j] < bad_answer.data[j]){
+                                        change_number[j] -= DELTA;
+                                    }
+                                    break;
+                                
+                                case "GNQTS":
+                                    if(best_answer.data[j] > bad_answer.data[j]){
+                                        if(change_number[j] < 0.5){
+                                            change_number[j] = 1 - change_number[j];
+                                        }
+                                        change_number[j] += DELTA;
+                                    }else if(best_answer.data[j] < bad_answer.data[j]){
+                                        if(change_number[j] > 0.5){
+                                            change_number[j] = 1 - change_number[j];
+                                        }
+                                        change_number[j] -= DELTA;
+                                    }
+                                    break;
                             }
+                            
                         }   
 
                     }
@@ -299,7 +322,7 @@
                     for(var j = 0; j < COMPANYNUMBER; j++){
                         color = getRandomColor();
                         dataset.push({
-                            label : company_name[j],
+                            label : stock[j].company_name,
                             borderDash: [5, 5],
                             lineTension : 0,
                             backgroundColor : color,
@@ -315,7 +338,7 @@
                     
 
                     dataset.push({
-                        label : "best : " + best_name,
+                        label : "best : " + best_answer.company_name,
                             lineTension : 0,
                             backgroundColor : color,
                             borderColor : color,
@@ -347,26 +370,52 @@
                         datasets: dataset,
                     }
 
-                    var dataset2 = [];
+                    stock = quickSort(stock);
+                    stock.reverse();
+                    var neg_stock = [];
+
                     for(var j = 0; j < COMPANYNUMBER; j++){
+                        if(stock[stock.length - 1].trend < 0){
+                            neg_stock.push(stock.pop());
+                        }
+                    }
+
+                    neg_stock.reverse();
+
+                    var dataset2 = [];
+                    for(var j = 0; j < stock.length; j++){
                         color = getRandomColor();
                         dataset2.push({
-                            label : company_name[j],
+                            label : stock[j].company_name,
                             backgroundColor : color,
                             borderColor : color,
                             borderWidth : 1,
                             data: [stock[j].trend],
+                            yAxisID: 'y-axis-1',
+                        });
+                    } 
+
+                    for(var j = 0; j < neg_stock.length; j++){
+                        color = getRandomColor();
+                        dataset2.push({
+                            label : neg_stock[j].company_name,
+                            backgroundColor : color,
+                            borderColor : color,
+                            borderWidth : 1,
+                            data: [neg_stock[j].trend],
+                            yAxisID: 'y-axis-2',
                         });
                     } 
 
                     
                     color = getRandomColor();
                     dataset2.push({
-                        label : "best : " + best_name,
+                        label : "best : " + best_answer.company_name,
                         backgroundColor : color,
                         borderColor : color,
                         borderWidth : 1,
                         data: [best_answer.trend],
+                        yAxisID: 'y-axis-1',
                     });
 
                     
@@ -393,7 +442,7 @@
 
                     color = getRandomColor();
                     dataset3.push({
-                            label : "best : " + best_name,
+                            label : "best : " + best_answer.company_name,
                             lineTension : 0.4,
                             backgroundColor : color,
                             borderColor : color,
@@ -483,11 +532,60 @@
                             legend: {
                                 position: 'top',
                             },
+                            scales: {
+                                    xAxes: [{
+                                        display: true
+                                    }],
+                                    yAxes: [{
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'left',
+                                        ticks: {
+                                            min: -3,
+                                            max: 3,
+                                        },
+                                        id: 'y-axis-1',
+                                    }, {
+                                        type: 'linear', 
+                                        display: true,
+                                        position: 'right',
+                                        ticks: {
+                                            min: -1500000000,
+                                            max: 1500000000,
+                                        },
+                                        id: 'y-axis-2',
+                                        // grid line settings
+                                        gridLines: {
+                                            drawOnChartArea: false, // only want the grid lines for one axis to show up
+                                        },
+                                    }]
+                                },
 
                         }
                     });
                 });
                 
+            }
+
+            function quickSort(arr) {
+                
+                if (arr.length <= 1) {
+                    return arr;
+                }
+
+                const less = [];
+                const greater = [];
+                const pivot = arr[arr.length - 1];
+                for (let i = 0; i < arr.length - 1; ++i) {
+                    const num = arr[i];
+                    if (num.trend < pivot.trend) {
+                    less.push(num);
+                    } else {
+                    greater.push(num);
+                    }
+                }
+
+                return [...quickSort(less), pivot, ...quickSort(greater)];
             }
 
             function selectALL(){
