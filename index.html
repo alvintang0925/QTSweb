@@ -37,7 +37,8 @@
             var COMPANYNUMBER;
             var company_name = [];
             var s_company = [];
-            var data;
+            var data = [];
+            var data_list_count;
             var bar_chart;
             var line_chart;
             var best_line_chart;
@@ -79,11 +80,11 @@
             };
 
 
+        
 
 
 
             function countTrend(stock){
-                
                 for(var j = 0; j < stock.length; j++){
                     if(stock[j].counter!=0){
                         stock[j].dMoney = Math.floor(FUNDS / stock[j].counter);
@@ -91,9 +92,9 @@
                     }
 
                     for(var k = 0; k < stock[j].counter; k++){
-                        stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[1][s_company[stock[j].locate[k]]]));
-                        stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[1][s_company[stock[j].locate[k]]]));
-                        stock[j].fs[k][0] = stock[j].investment_number[k] * parseFloat(data[1][s_company[stock[j].locate[k]]]);    
+                        stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[0][company_name[s_company[stock[j].locate[k]]]]));
+                        stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[0][company_name[s_company[stock[j].locate[k]]]]));
+                        stock[j].fs[k][0] = stock[j].investment_number[k] * parseFloat(data[0][company_name[s_company[stock[j].locate[k]]]]);    
                     }
                     
                     stock[j].totalMoney[0] = FUNDS;
@@ -104,8 +105,8 @@
                     for(var k = 0; k < stock.length; k++){
                         for(var h = 0; h < stock[k].counter; h++){
                             
-                            stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+2][s_company[stock[k].locate[h]]]);
-                            stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+2][s_company[stock[k].locate[h]]]);
+                            stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+1][company_name[s_company[stock[k].locate[h]]]]);
+                            stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+1][company_name[s_company[stock[k].locate[h]]]]);
                         }
                         stock[k].totalMoney[j+1] += stock[k].myMoney;
                         stock[k].mx += (j+2) * (stock[k].totalMoney[j+1] - FUNDS);
@@ -137,35 +138,36 @@
                 return stock;
             }
 
+            var tempe = 0;
+
             function countFunds(){
+                d3.csv("data.csv", function(d){
+                    tempe =1;
+                    QTSTYPE = document.getElementById("qts_list").value;
+                    DELTA = parseFloat(document.getElementById("delta").value);
+                    RUNTIMES = parseInt(document.getElementById("runtimes").value);
+                    
+                    var c = 0;
 
-                QTSTYPE = document.getElementById("qts_list").value;
-                DELTA = parseFloat(document.getElementById("delta").value);
-                RUNTIMES = parseInt(document.getElementById("runtimes").value);
-                
-                var c = 0;
-
-                for(var j = 0; j < box.length; j++){
-                    if(box[j].checked){
-                        s_company[c] = parseInt(box[j].value);
+                    for(var j = 0; j < box.length; j++){
+                        if(box[j].checked){
+                            s_company[c] = parseInt(box[j].value);
+                            c++;
+                        }
+                    }
+                    COMPANYNUMBER = c;
+                    DAYNUMBER = data.length;
+                    c = 0;
+                    var count = 0;
+                    for(var ke in data[0]){
+                        if(c == s_company[count]){
+                            company_name[count] = ke;
+                            count++;
+                        }
                         c++;
                     }
-                }
-                COMPANYNUMBER = c;
-
-
-                
-                d3.csv("data3.csv", function(d) {
-                    data = d;
-                    DAYNUMBER = data.length - 1;
-
                     var stock = [];
             
-
-                    for(var j = 0;j < COMPANYNUMBER; j++){
-                        company_name[j] = data[0][s_company[j]];
-                    }
-
                     for(var j = 0; j < COMPANYNUMBER; j++){
                         stock[j] = new STOCK();
 
@@ -522,9 +524,9 @@
                             }
                     });
 
-                     bar_chart.destroy();
+                        bar_chart.destroy();
 
-                     bar_chart = new Chart(ctx2,{
+                        bar_chart = new Chart(ctx2,{
                         type: 'bar',
                         data: barChartData,
                         options: {
@@ -561,8 +563,9 @@
                                     }]
                                 },
 
-                        }
-                    });
+                            }
+                        });
+                    
                 });
                 
             }
@@ -607,10 +610,65 @@
                 }
             }
 
+            function temp(fn, c){
+                if(c<count_f){
+                    d3.csv(fn, function(d){
+                        
+                            data = data.concat(d);
+                        
+                            c++;
+                            temp(filename[c],c);
+                        
+                                            
+                    });
+                }
+            }
+
+            var filename = [];
+            var count_f = 0;
+
+            function preset(){
+                data = [];
+                data_list = [];
+                data_list_count = 0;
+                filename = [];
+                count_f = 0;
+                var start_month = document.getElementById("start_month").value;
+                var end_month = document.getElementById("end_month").value;
+                start_month = start_month.split("-");
+                end_month = end_month.split("-");
+                var current_month = start_month;
+                
+                while((current_month[0] != end_month[0] || current_month[1] != end_month[1])){
+                    filename[count_f] = "DJI_30/M2M/train_" + current_month[0] + "_" + current_month[1] + "(" + current_month[0] + " Q1).csv";
+                    count_f++;
+                    var m = parseInt(current_month[1])
+                    if(m < 12){
+                        m++;
+                        if(m < 10){
+                            current_month[1] = "0" + m.toString();
+                        }else{
+                            current_month[1] = m.toString();
+                        }
+                    }else{
+                        m = parseInt(current_month[0])+1;
+                        current_month[0] = m.toString();
+                        m = 1;
+                        current_month[1] = "0" + m.toString();
+                    }
+                }
+                
+                temp(filename[0],0)
+                
+                var se = count_f * 50;
+                setTimeout(countFunds,se);
+
+            }
+
 
             function start(){       
                 var sendButton = document.getElementById("sendButton");
-                sendButton.addEventListener("click", countFunds, false);
+                sendButton.addEventListener("click", preset, false);
                 var allButton = document.getElementById("allButton");
                 allButton.addEventListener("click", selectALL, false);
                 var resetButton = document.getElementById("resetButton");
@@ -735,6 +793,11 @@
                 <option value = "GQTS">GQTS</option>
                 <option value = "GNQTS" selected>GNQTS</option>
             </select>
+            開始月份：
+            <input type="month" min="2009-12" max = "2019-11" value = "2019-06" id="start_month" />
+            結束月份：
+            <input type="month" min="2010-01" max = "2019-12" value = "2019-10" id="end_month" />
+            <br>
             <input type = "button" value="送出" id = "sendButton">
 
 
