@@ -42,12 +42,8 @@ function STOCK(){
     }
 };
 
-
-
-
-
-
 function countTrend(stock){
+    
     for(var j = 0; j < stock.length; j++){
         if(stock[j].counter!=0){
             stock[j].dMoney = Math.floor(FUNDS / stock[j].counter);
@@ -55,9 +51,9 @@ function countTrend(stock){
         }
 
         for(var k = 0; k < stock[j].counter; k++){
-            stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[0][company_name[s_company[stock[j].locate[k]]]]));
-            stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[0][company_name[s_company[stock[j].locate[k]]]]));
-            stock[j].fs[k][0] = stock[j].investment_number[k] * parseFloat(data[0][company_name[s_company[stock[j].locate[k]]]]);    
+            stock[j].investment_number[k] = Math.floor(stock[j].dMoney / parseFloat(data[0][company_name[stock[j].locate[k]]]));
+            stock[j].myMoney += stock[j].dMoney - (stock[j].investment_number[k] * parseFloat(data[0][company_name[stock[j].locate[k]]]));
+            stock[j].fs[k][0] = stock[j].investment_number[k] * parseFloat(data[0][company_name[stock[j].locate[k]]]); 
         }
         
         stock[j].totalMoney[0] = FUNDS;
@@ -68,8 +64,8 @@ function countTrend(stock){
         for(var k = 0; k < stock.length; k++){
             for(var h = 0; h < stock[k].counter; h++){
                 
-                stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+1][company_name[s_company[stock[k].locate[h]]]]);
-                stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+1][company_name[s_company[stock[k].locate[h]]]]);
+                stock[k].totalMoney[j+1] += stock[k].investment_number[h] * parseFloat(data[j+1][company_name[stock[k].locate[h]]]);
+                stock[k].fs[h][j+1] = stock[k].investment_number[h] * parseFloat(data[j+1][company_name[stock[k].locate[h]]]);
             }
             stock[k].totalMoney[j+1] += stock[k].myMoney;
             stock[k].mx += (j+2) * (stock[k].totalMoney[j+1] - FUNDS);
@@ -104,20 +100,16 @@ function countTrend(stock){
 
 function countFunds(){
     if(data.length != 0){
-        d3.csv("data.csv", function(d){
+        d3.csv("data/data4.csv", function(d){
+            
             QTSTYPE = document.getElementById("qts_list").value;
             DELTA = parseFloat(document.getElementById("delta").value);
             RUNTIMES = parseInt(document.getElementById("runtimes").value);
-            
-            var c = 0;
 
-            for(var j = 0; j < box.length; j++){
-                if(box[j].checked){
-                    s_company[c] = parseInt(box[j].value);
-                    c++;
-                }
+            for(var j = 0; j < bubble_list.length; j++){
+                    s_company[j] = bubble_list[j].idx;
             }
-            COMPANYNUMBER = c;
+            COMPANYNUMBER = bubble_list.length;
             DAYNUMBER = data.length;
             c = 0;
             var count = 0;
@@ -147,6 +139,7 @@ function countFunds(){
                     }
                 }
                 stock[j].init();
+                
             }
 
             stock = countTrend(stock);

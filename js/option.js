@@ -1,21 +1,42 @@
 function selectALL(){
-    for(var j = 0; j < box.length; j++){
-        box[j].checked = true;
+
+    for(var j = 0; j < nodes.length; j++){
+        if(nodes[j].selected == false){
+            
+            d3.select(circles[0][j]).transition()
+                .duration(400)    
+                .ease("bounce")
+                .attr("r", function(it){return it.r * 1.5})
+                .each('start',function(it){
+                    it.r *= 1.5;
+                    it.selected = true;
+                });
+            
+            
+            select_bubble.push(nodes[j]);
+            select_bubble_add.push(circles[0][j]);
+        }
     }
+
 }
 
 function resetAll(){
-    for(var j = 0; j < box.length; j++){
-        box[j].checked = false;
+    console.log(bubble_list);
+    force.stop();
+    for(var j = 0; j < bubble_list.length; j++){
+        
+        bubble_list[j].selected = false;
+        bubble_list[j].r = 20;
+        bubble_list[j].company = all_company_name[bubble_list[j].idx];
+        nodes.push(bubble_list[j]);
+        circles[0].push(bubble_list_add[j]);
+        
     }
+    force.resume();
+    bubble_list = [];
+    bubble_list_add = [];
 }
 
-function setAll(){
-    var n = parseInt(document.getElementById("select_number").value);
-    for(var j = 0; j < n; j++){
-        box[j].checked = true;
-    }
-}
 
 function temp(fn, c){
     if(c<count_f){
@@ -65,9 +86,10 @@ function preset(){
             }
         }
     }
+    sendBubble();
     
-    temp(filename[0], 0, data)
+    temp(filename[0], 0)
     
-    var se = count_f * 50;
+    se = Math.max(count_f * 50, 1000);
     setTimeout(countFunds,se);
 }
