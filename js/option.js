@@ -2,19 +2,19 @@ function selectALL(){
 
     for(var j = 0; j < nodes.length; j++){
         if(nodes[j].selected == false){
-            
-            d3.select(circles[0][j]).transition()
-                .duration(400)    
-                .ease("bounce")
-                .attr("r", function(it){return it.r * 1.5})
-                .each('start',function(it){
-                    it.r *= 1.5;
-                    it.selected = true;
-                });
+            d3.select(images[0][j]).transition()
+            .duration(700)    
+            .ease("bounce")
+            .attr("width", function(d){return d.r * 1.5 * 2;})
+            .attr("height", function(d){return d.r * 1.5 * 2;})
+            .each("start",function(d){
+                d.r *= 1.5;
+                d.selected = true;
+            });
             
             
             select_bubble.push(nodes[j]);
-            select_bubble_add.push(circles[0][j]);
+            select_bubble_add.push(images[0][j]);
         }
     }
 
@@ -29,7 +29,7 @@ function resetAll(){
         bubble_list[j].r = 20;
         bubble_list[j].company = all_company_name[bubble_list[j].idx];
         nodes.push(bubble_list[j]);
-        circles[0].push(bubble_list_add[j]);
+        images[0].push(bubble_list_add[j]);
         
     }
     force.resume();

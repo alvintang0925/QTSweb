@@ -6,6 +6,7 @@ var bubble_list = [];
 var bubble_list_add = [];
 var circles;
 var names;
+var images;
 var color2 = d3.scale.category20();
 var nodes = [];
 var force;
@@ -29,24 +30,21 @@ function sendBubble(){
         d3.select(select_bubble_add[j]).transition()
                     .duration(750)     
                     .ease("cubic-in")  
-                    .attr("fill", "black")
-                    .attr("r", 0)
-                    .attr("cx", 400)
-                    .attr("cy", 590)
+                    // .attr("xlink:href", "img/black.png")
+                    .attr("width", 0)
+                    .attr("height", 0)
+                    .attr("x", 380)
+                    .attr("y", 570)
                     .each('start',function(it){
                         it.r = 0;
-                        
                     });
 
         for(var k = 0; k < nodes.length; k++){
             if(nodes[k].company == select_bubble[j].company){
                 nodes.splice(k,1);  
-                circles[0].splice(k,1);
+                images[0].splice(k,1);
             }
         }
-        
-        select_bubble[j].company = "";
-        names.text(function(it){ return it.company});
     }
     select_bubble_add = [];
     select_bubble = [];
@@ -77,12 +75,12 @@ function dragend(d, i) {
 function clicked(d, i){
     if (d3.event.defaultPrevented) return; // dragged
     if(!(d.selected)){
-
         d3.select(this).transition()
-        .duration(400)    
+        .duration(700)    
         .ease("bounce")
-        .attr("r", d.r * 1.5)
-        .each('start',function(){
+        .attr("width", d.r * 1.5 * 2)
+        .attr("height", d.r * 1.5 * 2)
+        .each("start",function(){
             d.r *= 1.5;
         });
         d.selected = true;
@@ -95,10 +93,11 @@ function clicked(d, i){
         select_bubble_add.push(this);
     }else{
         d3.select(this).transition()
-        .duration(400)    
-        .ease("bounce")   
-        .attr("r", d.r / 1.5)
-        .each('start',function(){
+        .duration(700)    
+        .ease("bounce")
+        .attr("width", d.r / 1.5 * 2)
+        .attr("height", d.r / 1.5 * 2)
+        .each("start",function(){
             d.r /= 1.5;
         });
         d.selected = false;
@@ -113,17 +112,20 @@ function clicked(d, i){
 
 function tick() { // tick 會不斷的被呼叫
             
-    circles.attr({
-    cx: function(it) { return it.x; },  // it.x 由 Force Layout 提供
-    cy: function(it) { return it.y; },  // it.y 由 Force Layout 提供
-    r: function(it) { return it.r; },
-    idx: function(it) { return it.idx; },
-    fill: function(it) { return color2(it.idx);} 
-    });
-    names.attr({
+    // circles.attr({
+    // cx: function(it) { return it.x; },  // it.x 由 Force Layout 提供
+    // cy: function(it) { return it.y; },  // it.y 由 Force Layout 提供
+    // r: function(it) { return it.r; },
+    // idx: function(it) { return it.idx; },
+    // fill: function(it) { return color2(it.idx);} 
+    // });
+
+    images.attr({
         x: function(it){ return it.x;},
-        y: function(it){ return it.y+5;},
-    }).text(function(it){return it.company});
+        y: function(it){ return it.y ;},
+        width: function(it) {return it.r*2;},
+        height: function(it) {return it.r*2;},
+    });
 }
 function showBubble(){
 
@@ -139,6 +141,7 @@ function showBubble(){
             nodes[c].idx = c;
             nodes[c].company = i;
             nodes[c].selected = false;
+            nodes[c].img = "img/" + i + ".png";
             all_company_name[c] = i;
             c++;
 
@@ -149,23 +152,23 @@ function showBubble(){
             .on("drag", dragmove)
             .on("dragend", dragend);
 
-        circles = d3.select("svg").selectAll("circle")
-                                .data(nodes)
-                                .enter()
-                                .append("circle")
-                                .call(node_drag)
-                                .on("click",clicked);
+        // circles = d3.select("svg").selectAll("circle")
+        //                         .data(nodes)
+        //                         .enter()
+        //                         .append("circle")
+        //                         .attr("stroke", "black");
+                                
 
-        names = d3.select("svg").selectAll("text")
+        
+        images = d3.select("svg").selectAll("image")
                                 .data(nodes)
                                 .enter()
-                                .append("text")
-                                .attr({
-                                    x: function(it) { return it.x; },
-                                    y: function(it) { return it.y; },
-                                    idx: function(it){ return it.idx},
-                                    "text-anchor": "middle",                    
-                                }).text(function(it) { return it.company; });
+                                .append("image")
+                                .attr("xlink:href",  function(it) { return it.img;})
+                                .attr("image-anchor", "middle")
+                                .call(node_drag)
+                                .on("click",clicked);;
+                                
 
         
         force = d3.layout.force() // 建立 Layout
