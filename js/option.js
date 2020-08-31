@@ -58,7 +58,6 @@ function preset(){
     filename = [];
     count_f = 0;
     var start_month = document.getElementById("start_month").value;
-    console.log(start_month);
     var end_month = document.getElementById("end_month").value;
     start_month = start_month.split("-");
     end_month = end_month.split("-");
