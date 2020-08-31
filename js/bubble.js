@@ -11,6 +11,7 @@ var color2 = d3.scale.category20();
 var nodes = [];
 var force;
 var all_company_name = [];
+var ticktimes = 0;
 
 
 function sendBubble(){
@@ -110,6 +111,14 @@ function clicked(d, i){
     }
 }
 
+function mouseEnter(d, i){
+    d.name = d.company;
+}
+
+function mouseLeave(d, i){
+    d.name = "";
+}
+
 function tick() { // tick 會不斷的被呼叫
             
     // circles.attr({
@@ -119,6 +128,7 @@ function tick() { // tick 會不斷的被呼叫
     // idx: function(it) { return it.idx; },
     // fill: function(it) { return color2(it.idx);} 
     // });
+    ticktimes++;
 
     images.attr({
         x: function(it){ return it.x;},
@@ -126,6 +136,17 @@ function tick() { // tick 會不斷的被呼叫
         width: function(it) {return it.r*2;},
         height: function(it) {return it.r*2;},
     });
+
+    names.attr({
+        x: function(it){ return it.x;},
+        y: function(it){ return it.y;}
+    }).text(function(it){return it.name});
+
+    if(ticktimes == 298){
+        ticktimes = 0;
+        force.alpha(0.1);
+    }
+
 }
 function showBubble(){
 
@@ -142,6 +163,7 @@ function showBubble(){
             nodes[c].company = i;
             nodes[c].selected = false;
             nodes[c].img = "img/" + i + ".png";
+            nodes[c].name = "";
             all_company_name[c] = i;
             c++;
 
@@ -167,18 +189,29 @@ function showBubble(){
                                 .attr("xlink:href",  function(it) { return it.img;})
                                 .attr("image-anchor", "middle")
                                 .call(node_drag)
-                                .on("click",clicked);;
-                                
-
+                                .on("click",clicked)
+                                .on("mouseenter", mouseEnter)
+                                .on("mouseleave", mouseLeave);
         
+        names = d3.select("svg").selectAll("text")
+                                .data(nodes)
+                                .enter()
+                                .append("text")
+                                .attr("text-anchor", "middle")
+                                .attr("x", function(it){return it.x;})
+                                .attr("y", function(it){return it.y;})
+                                .attr("fill", "black")
+                                .text(function(it){return it.name;});
+
+                                
         force = d3.layout.force() // 建立 Layout
             .nodes(nodes)               // 綁定資料
             .size([800,600])            // 設定範圍
-            .distance(30)
             .gravity(0.1)
             .charge(-300)
             .on("tick", tick)           // 設定 tick 函式
-            .start();                   // 啟動！
+            .start()                   // 啟動！
+            .alpha(0.1);
     });
      
 }
