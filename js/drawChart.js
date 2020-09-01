@@ -32,7 +32,7 @@ function getRandomColor() {
     for (var i = 0; i < 6; i++ ) {
         color += letters[Math.floor(Math.random() * 16)];
     }
-    if(color == "#FF0000"){
+    if(color == "#FF0000" || color == "#FFD9EC"){
         return getRandomColor();
     }else{
         return color;
@@ -58,18 +58,35 @@ function drawChart(best_answer, stock){
 
             var dataset = [];
 
-            color = getRandomColor();
+
             
+
+            color = getRandomColor();
+
             dataset.push({
-                label : "best : " + best_answer.company_name,
+                label : "趨勢線",
                     lineTension : 0,
-                    backgroundColor : "#FF0000",
-                    borderColor : "#FF0000",
-                    borderWidth : 3,
-                    data: best_answer.totalMoney,
+                    backgroundColor : color,
+                    borderColor : color,
+                    borderWidth : 1,
+                    data: best_answer.y_line,
                     fill : false,
                     yAxisID: 'y-axis-1',
             });
+
+            color = getRandomColor();
+
+            dataset.push({
+                label : "best : " + best_answer.company_name,
+                    // lineTension : 1,
+                    backgroundColor : "#FFD9EC",
+                    borderColor : "#FF0000",
+                    borderWidth : 3,
+                    data: best_answer.totalMoney,
+                    fill : "-1",
+                    yAxisID: 'y-axis-1',
+            });
+            
 
             for(var j = 0; j < COMPANYNUMBER; j++){
                 color = getRandomColor();
@@ -89,18 +106,6 @@ function drawChart(best_answer, stock){
 
     
 
-            color = getRandomColor();
-
-            dataset.push({
-                label : "趨勢線",
-                    lineTension : 0,
-                    backgroundColor : color,
-                    borderColor : color,
-                    borderWidth : 1,
-                    data: best_answer.y_line,
-                    fill : true,
-                    yAxisID: 'y-axis-1',
-            });
 
 
 
